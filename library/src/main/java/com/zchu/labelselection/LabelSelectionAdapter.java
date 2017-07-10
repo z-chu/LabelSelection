@@ -33,7 +33,7 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         RecyclerView.ViewHolder viewHolder = null;
-        mRecyclerView= (RecyclerView) parent;
+        mRecyclerView = (RecyclerView) parent;
         mContext = parent.getContext();
         if (mLayoutInflater == null) {
             mLayoutInflater = LayoutInflater.from(mContext);
@@ -43,10 +43,16 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 viewHolder = new LabelSelectedViewHolder(mLayoutInflater.inflate(R.layout.item_label, parent, false));
                 break;
             case LabelSelectionItem.TYPE_LABEL_UNSELECTED:
-                viewHolder = new LabelSelectedViewHolder(mLayoutInflater.inflate(R.layout.item_label, parent, false));
+                viewHolder = new LabelUnselectedViewHolder(mLayoutInflater.inflate(R.layout.item_label, parent, false));
                 break;
-            case LabelSelectionItem.TYPE_LABEL_TITLE:
-                viewHolder = new LabelSelectedViewHolder(mLayoutInflater.inflate(R.layout.item_label_title, parent, false));
+            case LabelSelectionItem.TYPE_LABEL_SELECTED_TITLE:
+                //LabelTitleViewHolder selectedTitleViewHolder = new LabelTitleViewHolder(mLayoutInflater.inflate(R.layout.item_label_title, parent, false));
+                viewHolder = new LabelTitleViewHolder(mLayoutInflater.inflate(R.layout.item_label_title, parent, false));
+                break;
+            case LabelSelectionItem.TYPE_LABEL_UNSELECTED_TITLE:
+                LabelTitleViewHolder unselectedTitleViewHolder = new LabelTitleViewHolder(mLayoutInflater.inflate(R.layout.item_label_title, parent, false));
+                unselectedTitleViewHolder.tvAction.setVisibility(View.GONE);
+                viewHolder = unselectedTitleViewHolder;
                 break;
         }
         return viewHolder;
