@@ -15,6 +15,16 @@ public class LabelSelectionItem implements Serializable {
     static final int TYPE_LABEL_UNSELECTED_TITLE = 4;
 
 
+    public LabelSelectionItem(int itemType, String title) {
+        this.itemType = itemType;
+        this.title = title;
+    }
+
+    public LabelSelectionItem(int itemType, Label label) {
+        this.itemType = itemType;
+        this.label = label;
+    }
+
     private int itemType;
     private String title;
     private Label label;

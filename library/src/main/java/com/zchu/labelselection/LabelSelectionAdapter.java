@@ -1,10 +1,16 @@
 package com.zchu.labelselection;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.TranslateAnimation;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -18,35 +24,65 @@ import java.util.List;
 
 public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
+    // touch 间隔时间  用于分辨是否是 "点击"
+    private static final long TOUCH_SPACE_TIME = 100;
+    // 动画持续时间
+    private static final long ANIM_TIME = 400;
+
     private Context mContext;
     private List<LabelSelectionItem> mData;
     private LayoutInflater mLayoutInflater;
+
     private RecyclerView mRecyclerView;
+    // touch 点击开始时间
+    private long touchStartTime;
 
     private boolean isEditing;
+    private LabelTitleViewHolder selectedTitleViewHolder;
 
     public LabelSelectionAdapter(List<LabelSelectionItem> data) {
         this.mData = data;
+
     }
 
+    private OnChannelDragListener onChannelDragListener;
+
+    public void setOnChannelDragListener(OnChannelDragListener onChannelDragListener) {
+        this.onChannelDragListener = onChannelDragListener;
+    }
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         RecyclerView.ViewHolder viewHolder = null;
-        mRecyclerView = (RecyclerView) parent;
+        if (mRecyclerView == null) {
+            mRecyclerView = (RecyclerView) parent;
+        }
+
         mContext = parent.getContext();
         if (mLayoutInflater == null) {
             mLayoutInflater = LayoutInflater.from(mContext);
         }
         switch (viewType) {
             case LabelSelectionItem.TYPE_LABEL_SELECTED:
-                viewHolder = new LabelSelectedViewHolder(mLayoutInflater.inflate(R.layout.item_label, parent, false));
+                viewHolder = createLabelSelectedViewHolder(parent);
                 break;
             case LabelSelectionItem.TYPE_LABEL_UNSELECTED:
-                viewHolder = new LabelUnselectedViewHolder(mLayoutInflater.inflate(R.layout.item_label, parent, false));
+                viewHolder = createLabelUnselectedViewHolder(parent);
                 break;
             case LabelSelectionItem.TYPE_LABEL_SELECTED_TITLE:
-                //LabelTitleViewHolder selectedTitleViewHolder = new LabelTitleViewHolder(mLayoutInflater.inflate(R.layout.item_label_title, parent, false));
+                selectedTitleViewHolder = new LabelTitleViewHolder(mLayoutInflater.inflate(R.layout.item_label_title, parent, false));
+                selectedTitleViewHolder.tvAction.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        if (isEditing) {
+                            changeEditState(false);
+                            selectedTitleViewHolder.tvAction.setText("编辑");
+                        } else {
+                            selectedTitleViewHolder.tvAction.setText("完成");
+                            changeEditState(true);
+                        }
+                    }
+                });
                 viewHolder = new LabelTitleViewHolder(mLayoutInflater.inflate(R.layout.item_label_title, parent, false));
                 break;
             case LabelSelectionItem.TYPE_LABEL_UNSELECTED_TITLE:
@@ -58,17 +94,185 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         return viewHolder;
     }
 
+    private RecyclerView.ViewHolder createLabelSelectedViewHolder(ViewGroup parent) {
+        final LabelSelectedViewHolder labelSelectedViewHolder = new LabelSelectedViewHolder(mLayoutInflater.inflate(R.layout.item_label_selected, parent, false));
+
+
+        return labelSelectedViewHolder;
+    }
+
+    private RecyclerView.ViewHolder createLabelUnselectedViewHolder(ViewGroup parent) {
+        final LabelUnselectedViewHolder labelUnselectedViewHolder = new LabelUnselectedViewHolder(mLayoutInflater.inflate(R.layout.item_label_unselected, parent, false));
+       /* labelUnselectedViewHolder.tvName.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                selectedLabel(labelUnselectedViewHolder, mData.get(labelUnselectedViewHolder.getAdapterPosition()));
+            }
+        });*/
+        return labelUnselectedViewHolder;
+    }
+
+
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         LabelSelectionItem labelSelectionItem = mData.get(position);
-        if (holder instanceof LabelSelectedViewHolder) {
-            ((LabelSelectedViewHolder) holder).tvName.setText(labelSelectionItem.getLabel().getName());
-        } else if (holder instanceof LabelUnselectedViewHolder) {
-            ((LabelUnselectedViewHolder) holder).tvName.setText(labelSelectionItem.getLabel().getName());
-        } else if (holder instanceof LabelTitleViewHolder) {
-            ((LabelTitleViewHolder) holder).tvTitle.setText(labelSelectionItem.getTitle());
+        switch (holder.getItemViewType()) {
+            case LabelSelectionItem.TYPE_LABEL_SELECTED:
+                bindLabelSelectedViewHolder((LabelSelectedViewHolder) holder, labelSelectionItem);
+                break;
+            case LabelSelectionItem.TYPE_LABEL_UNSELECTED:
+                bindLabelUnselectedViewHolder((LabelUnselectedViewHolder) holder, labelSelectionItem);
+
+                break;
+            case LabelSelectionItem.TYPE_LABEL_SELECTED_TITLE:
+                ((LabelTitleViewHolder) holder).tvTitle.setText(labelSelectionItem.getTitle());
+                break;
+            case LabelSelectionItem.TYPE_LABEL_UNSELECTED_TITLE:
+                ((LabelTitleViewHolder) holder).tvTitle.setText(labelSelectionItem.getTitle());
+                break;
         }
     }
+
+    private void bindLabelSelectedViewHolder(final LabelSelectedViewHolder holder, final LabelSelectionItem item) {
+        holder.tvName.setText(item.getLabel().getName());
+        holder.ivRemove.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isEditing) {
+                    unselectedLabel(holder,item);
+                }
+
+            }
+        });
+        holder.tvName.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View v, MotionEvent event) {
+                if (!isEditing) return false;//正常模式无需监听触摸
+                switch (event.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        touchStartTime = System.currentTimeMillis();
+                        break;
+                    case MotionEvent.ACTION_MOVE:
+                        if (System.currentTimeMillis() - touchStartTime > TOUCH_SPACE_TIME) {
+                            //当MOVE事件与DOWN事件的触发的间隔时间大于100ms时，则认为是拖拽starDrag
+                            if (onChannelDragListener != null) {
+                                onChannelDragListener.onStarDrag(holder);
+                            }
+                        }
+                        break;
+                    case MotionEvent.ACTION_CANCEL:
+                    case MotionEvent.ACTION_UP:
+                        touchStartTime = 0;
+                        break;
+                }
+                return false;
+            }
+        });
+        holder.tvName.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (!isEditing) {
+                    //开启编辑模式
+                    changeEditState(true);
+                    //  mEditViewHolder.setText(R.id.tvEdit, "完成");
+                    selectedTitleViewHolder.tvAction.setText("完成");
+                }
+                if (onChannelDragListener != null) {
+                    onChannelDragListener.onStarDrag(holder);
+                }
+                return true;
+            }
+        });
+
+    }
+
+    private void bindLabelUnselectedViewHolder(final LabelUnselectedViewHolder holder, final LabelSelectionItem item) {
+        holder.tvName.setText(item.getLabel().getName());
+        holder.tvName.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                selectedLabel(holder, item);
+            }
+        });
+    }
+
+    /**
+     * 取消选中标签
+     * 从选中区域移动到未选中区域
+     */
+    private void unselectedLabel(LabelSelectedViewHolder viewHolder, LabelSelectionItem item) {
+        int otherFirstPosition = getUnselectedFirstPosition();
+        int currentPosition = viewHolder.getAdapterPosition();
+        //获取到目标View
+        View targetView = mRecyclerView.getLayoutManager().findViewByPosition(otherFirstPosition);
+        //获取当前需要移动的View
+        View currentView = mRecyclerView.getLayoutManager().findViewByPosition(currentPosition);
+        // 如果targetView不在屏幕内,则indexOfChild为-1  此时不需要添加动画,因为此时notifyItemMoved自带一个向目标移动的动画
+        // 如果在屏幕内,则添加一个位移动画
+        if (mRecyclerView.indexOfChild(targetView) >= 0 && otherFirstPosition != -1) {
+            RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
+            int spanCount = ((GridLayoutManager) manager).getSpanCount();
+            int targetX = targetView.getLeft();
+            int targetY = targetView.getTop();
+            int myChannelSize = getSelectedSize();//这里我是为了偷懒 ，算出来我的频道的大小
+            if (myChannelSize % spanCount == 1) {
+                //我的频道最后一行 之后一个，移动后
+                targetY -= targetView.getHeight();
+            }
+
+            //我的频道 移动到 推荐频道的第一个
+            item.setItemType(LabelSelectionItem.TYPE_LABEL_UNSELECTED);//改为推荐频道类型
+
+
+            startAnimation(currentView, targetX, targetY);
+        } else {
+            item.setItemType(LabelSelectionItem.TYPE_LABEL_UNSELECTED);//改为推荐频道类型
+            notifyDataSetChanged();
+            /*if (otherFirstPosition == -1) otherFirstPosition = mData.size();
+            if (onChannelDragListener != null)
+                onChannelDragListener.onMoveToOtherChannel(currentPosition, otherFirstPosition - 1);*/
+        }
+    }
+
+    /**
+     * 选中标签
+     * 从未选中区域移动到选中区域
+     */
+    private void selectedLabel(LabelUnselectedViewHolder viewHolder, LabelSelectionItem item) {
+        int myLastPosition = getSelectedLastPosition();
+        int currentPosition = viewHolder.getAdapterPosition();
+        //获取到目标View
+        View targetView = mRecyclerView.getLayoutManager().findViewByPosition(myLastPosition);
+        //获取当前需要移动的View
+        View currentView = mRecyclerView.getLayoutManager().findViewByPosition(currentPosition);
+        // 如果targetView不在屏幕内,则indexOfChild为-1  此时不需要添加动画,因为此时notifyItemMoved自带一个向目标移动的动画
+        // 如果在屏幕内,则添加一个位移动画
+        if (mRecyclerView.indexOfChild(targetView) >= 0 && myLastPosition != -1) {
+            RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
+            int spanCount = ((GridLayoutManager) manager).getSpanCount();
+            int targetX = targetView.getLeft() + targetView.getWidth();
+            int targetY = targetView.getTop();
+
+            int myChannelSize = getSelectedSize();//这里我是为了偷懒 ，算出来我的频道的大小
+            if (myChannelSize % spanCount == 0) {
+                //添加到我的频道后会换行，所以找到倒数第4个的位置
+
+                View lastFourthView = mRecyclerView.getLayoutManager().findViewByPosition(getSelectedLastPosition() - 3);
+//                                        View lastFourthView = mRecyclerView.getChildAt(getMyLastPosition() - 3);
+                targetX = lastFourthView.getLeft();
+                targetY = lastFourthView.getTop() + lastFourthView.getHeight();
+            }
+
+
+            // 推荐频道 移动到 我的频道的最后一个
+            item.setItemType(LabelSelectionItem.TYPE_LABEL_SELECTED);//改为推荐频道类型
+            startAnimation(currentView, targetX, targetY);
+        } else {
+            item.setItemType(LabelSelectionItem.TYPE_LABEL_SELECTED);
+            this.notifyDataSetChanged();
+        }
+    }
+
 
     @Override
     public int getItemViewType(int position) {
@@ -81,9 +285,128 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         return mData == null ? 0 : mData.size();
     }
 
+    /**
+     * 添加需要移动的 镜像View
+     */
+    private ImageView addMirrorView(ViewGroup parent, View view) {
+        view.destroyDrawingCache();
+        //首先开启Cache图片 ，然后调用view.getDrawingCache()就可以获取Cache图片
+        view.setDrawingCacheEnabled(true);
+        ImageView mirrorView = new ImageView(view.getContext());
+        //获取该view的Cache图片
+        Bitmap bitmap = Bitmap.createBitmap(view.getDrawingCache());
+        mirrorView.setImageBitmap(bitmap);
+        //销毁掉cache图片
+        view.setDrawingCacheEnabled(false);
+        int[] locations = new int[2];
+        view.getLocationOnScreen(locations);//获取当前View的坐标
+        int[] parenLocations = new int[2];
+        mRecyclerView.getLocationOnScreen(parenLocations);//获取RecyclerView所在坐标
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(bitmap.getWidth(), bitmap.getHeight());
+        params.setMargins(locations[0], locations[1] - parenLocations[1], 0, 0);
+        parent.addView(mirrorView, params);//在RecyclerView的Parent添加我们的镜像View，parent要是FrameLayout这样才可以放到那个坐标点
+        return mirrorView;
+    }
+
+    private void startAnimation(final View currentView, int targetX, int targetY) {
+        final ViewGroup parent = (ViewGroup) mRecyclerView.getParent();
+        final ImageView mirrorView = addMirrorView(parent, currentView);
+        TranslateAnimation animator = new TranslateAnimation(
+                Animation.RELATIVE_TO_SELF, 0f,
+                Animation.ABSOLUTE, targetX,
+                Animation.RELATIVE_TO_SELF, 0f,
+                Animation.ABSOLUTE, targetY);
+        // RecyclerView默认移动动画250ms 这里设置360ms 是为了防止在位移动画结束后 remove(view)过早 导致闪烁
+        animator.setDuration(ANIM_TIME);
+        animator.setFillAfter(true);
+        currentView.setVisibility(View.INVISIBLE);//暂时隐藏
+        animator.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                parent.removeView(mirrorView);//删除添加的镜像View
+                if (currentView.getVisibility() == View.INVISIBLE) {
+                    currentView.setVisibility(View.VISIBLE);//显示隐藏的View
+                }
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        mirrorView.startAnimation(animator);
+    }
+
+    public int getSelectedSize() {
+        int size = 0;
+        for (int i = 0; i < mData.size(); i++) {
+            LabelSelectionItem labelSelectionItem = mData.get(i);
+            if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_SELECTED) {
+                size++;
+            }
+        }
+        return size;
+
+    }
+
+    /**
+     * 获取推荐频道列表的第一个position
+     *
+     * @return
+     */
+    private int getUnselectedFirstPosition() {
+        for (int i = 0; i < mData.size(); i++) {
+            LabelSelectionItem labelSelectionItem = mData.get(i);
+            if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_UNSELECTED) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 我的频道最后一个的position
+     */
+    private int getSelectedLastPosition() {
+        for (int i = mData.size() - 1; i > -1; i--) {
+            LabelSelectionItem labelSelectionItem = mData.get(i);
+            if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_SELECTED) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    /**
+     * 开启编辑模式
+     */
+    private void changeEditState(boolean state) {
+        if (isEditing == state) {
+            return;
+        }
+        isEditing = state;
+        int visibleChildCount = mRecyclerView.getChildCount();
+        for (int i = 0; i < visibleChildCount; i++) {
+            View view = mRecyclerView.getChildAt(i);
+            ImageView imgEdit = (ImageView) view.findViewById(R.id.iv_remove);
+            if (imgEdit != null) {
+                // boolean isVis = imgEdit.getTag() == null ? false : (boolean) imgEdit.getTag();
+                imgEdit.setVisibility(state ? View.VISIBLE : View.INVISIBLE);
+            }
+        }
+    }
+
     public void setNewData(List<LabelSelectionItem> mData) {
         this.mData = mData;
         this.notifyDataSetChanged();
+    }
+
+    public List<LabelSelectionItem> getData() {
+        return mData;
     }
 
     public static class LabelSelectedViewHolder extends RecyclerView.ViewHolder {

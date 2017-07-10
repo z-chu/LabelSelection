@@ -16,6 +16,8 @@ public class ItemDragHelperCallBack extends ItemTouchHelper.Callback {
         this.onChannelDragListener = onChannelDragListener;
     }
 
+
+
     public void setOnChannelDragListener(OnChannelDragListener onChannelDragListener) {
         this.onChannelDragListener = onChannelDragListener;
     }
