@@ -83,7 +83,7 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                         }
                     }
                 });
-                viewHolder = new LabelTitleViewHolder(mLayoutInflater.inflate(R.layout.item_label_title, parent, false));
+                viewHolder = selectedTitleViewHolder;
                 break;
             case LabelSelectionItem.TYPE_LABEL_UNSELECTED_TITLE:
                 LabelTitleViewHolder unselectedTitleViewHolder = new LabelTitleViewHolder(mLayoutInflater.inflate(R.layout.item_label_title, parent, false));
@@ -140,7 +140,7 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         } else {
             holder.ivRemove.setVisibility(View.GONE);
         }
-        holder.ivRemove.setOnClickListener(new View.OnClickListener() {
+        View.OnClickListener onClickListener = new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (isEditing) {
@@ -148,7 +148,9 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
                 }
 
             }
-        });
+        };
+        holder.ivRemove.setOnClickListener(onClickListener);
+        holder.tvName.setOnClickListener(onClickListener);
         holder.tvName.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View v, MotionEvent event) {
