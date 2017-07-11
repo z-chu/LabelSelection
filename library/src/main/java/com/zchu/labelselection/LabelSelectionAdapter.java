@@ -135,11 +135,16 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     private void bindLabelSelectedViewHolder(final LabelSelectedViewHolder holder, final LabelSelectionItem item) {
         holder.tvName.setText(item.getLabel().getName());
+        if (isEditing) {
+            holder.ivRemove.setVisibility(View.VISIBLE);
+        } else {
+            holder.ivRemove.setVisibility(View.GONE);
+        }
         holder.ivRemove.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (isEditing) {
-                    unselectedLabel(holder,item);
+                    unselectedLabel(holder, item);
                 }
 
             }
@@ -223,12 +228,15 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             //我的频道 移动到 推荐频道的第一个
             item.setItemType(LabelSelectionItem.TYPE_LABEL_UNSELECTED);//改为推荐频道类型
 
-
+            onMove(currentPosition, otherFirstPosition - 1);
             startAnimation(currentView, targetX, targetY);
         } else {
             item.setItemType(LabelSelectionItem.TYPE_LABEL_UNSELECTED);//改为推荐频道类型
-            notifyDataSetChanged();
-            /*if (otherFirstPosition == -1) otherFirstPosition = mData.size();
+            if (otherFirstPosition == -1) {
+                otherFirstPosition = mData.size();
+            }
+            onMove(currentPosition, otherFirstPosition - 1);
+            /*
             if (onChannelDragListener != null)
                 onChannelDragListener.onMoveToOtherChannel(currentPosition, otherFirstPosition - 1);*/
         }
@@ -239,15 +247,15 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
      * 从未选中区域移动到选中区域
      */
     private void selectedLabel(LabelUnselectedViewHolder viewHolder, LabelSelectionItem item) {
-        int myLastPosition = getSelectedLastPosition();
+        int selectedLastPosition = getSelectedLastPosition();
         int currentPosition = viewHolder.getAdapterPosition();
         //获取到目标View
-        View targetView = mRecyclerView.getLayoutManager().findViewByPosition(myLastPosition);
+        View targetView = mRecyclerView.getLayoutManager().findViewByPosition(selectedLastPosition);
         //获取当前需要移动的View
         View currentView = mRecyclerView.getLayoutManager().findViewByPosition(currentPosition);
         // 如果targetView不在屏幕内,则indexOfChild为-1  此时不需要添加动画,因为此时notifyItemMoved自带一个向目标移动的动画
         // 如果在屏幕内,则添加一个位移动画
-        if (mRecyclerView.indexOfChild(targetView) >= 0 && myLastPosition != -1) {
+        if (mRecyclerView.indexOfChild(targetView) >= 0 && selectedLastPosition != -1) {
             RecyclerView.LayoutManager manager = mRecyclerView.getLayoutManager();
             int spanCount = ((GridLayoutManager) manager).getSpanCount();
             int targetX = targetView.getLeft() + targetView.getWidth();
@@ -257,20 +265,36 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             if (myChannelSize % spanCount == 0) {
                 //添加到我的频道后会换行，所以找到倒数第4个的位置
 
-                View lastFourthView = mRecyclerView.getLayoutManager().findViewByPosition(getSelectedLastPosition() - 3);
+                View lastFourthView = mRecyclerView.getLayoutManager().findViewByPosition(getSelectedLastPosition() - (((GridLayoutManager) manager).getSpanCount() - 1));
 //                                        View lastFourthView = mRecyclerView.getChildAt(getMyLastPosition() - 3);
-                targetX = lastFourthView.getLeft();
-                targetY = lastFourthView.getTop() + lastFourthView.getHeight();
+                if (lastFourthView != null) {
+                    targetX = lastFourthView.getLeft();
+                    targetY = lastFourthView.getTop() + lastFourthView.getHeight();
+                }
             }
 
 
             // 推荐频道 移动到 我的频道的最后一个
             item.setItemType(LabelSelectionItem.TYPE_LABEL_SELECTED);//改为推荐频道类型
+            onMove(currentPosition, selectedLastPosition + 1);
             startAnimation(currentView, targetX, targetY);
         } else {
             item.setItemType(LabelSelectionItem.TYPE_LABEL_SELECTED);
-            this.notifyDataSetChanged();
+            if (selectedLastPosition == -1) {
+                selectedLastPosition = 0;
+            }
+            onMove(currentPosition, selectedLastPosition + 1);
+
         }
+    }
+
+    private void onMove(int starPos, int endPos) {
+        LabelSelectionItem startItem = mData.get(starPos);
+        //先删除之前的位置
+        mData.remove(starPos);
+        //添加到现在的位置
+        mData.add(endPos, startItem);
+        this.notifyItemMoved(starPos, endPos);
     }
 
 
@@ -313,9 +337,9 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         final ImageView mirrorView = addMirrorView(parent, currentView);
         TranslateAnimation animator = new TranslateAnimation(
                 Animation.RELATIVE_TO_SELF, 0f,
-                Animation.ABSOLUTE, targetX,
+                Animation.ABSOLUTE, targetX - currentView.getLeft(),
                 Animation.RELATIVE_TO_SELF, 0f,
-                Animation.ABSOLUTE, targetY);
+                Animation.ABSOLUTE, targetY - currentView.getTop());
         // RecyclerView默认移动动画250ms 这里设置360ms 是为了防止在位移动画结束后 remove(view)过早 导致闪烁
         animator.setDuration(ANIM_TIME);
         animator.setFillAfter(true);
@@ -328,7 +352,7 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             @Override
             public void onAnimationEnd(Animation animation) {
                 parent.removeView(mirrorView);//删除添加的镜像View
-                if (currentView.getVisibility() == View.INVISIBLE) {
+                if (currentView.getVisibility() != View.VISIBLE) {
                     currentView.setVisibility(View.VISIBLE);//显示隐藏的View
                 }
             }
@@ -372,7 +396,7 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
      * 我的频道最后一个的position
      */
     private int getSelectedLastPosition() {
-        for (int i = mData.size() - 1; i > -1; i--) {
+        for (int i = mData.size() - 1; i >= 0; i--) {
             LabelSelectionItem labelSelectionItem = mData.get(i);
             if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_SELECTED) {
                 return i;

@@ -15,11 +15,11 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ArrayList<Label> selectedLabels=new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 15; i++) {
             selectedLabels.add(new Label(i,"选中"+i));
         }
         ArrayList<Label> unselectedLabels=new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 15; i++) {
             unselectedLabels.add(new Label(i,"未选中"+i));
         }
         getSupportFragmentManager()

@@ -1,5 +1,6 @@
 package com.zchu.labelselection;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -42,6 +43,7 @@ public class LabelSelectionFragment extends Fragment implements OnChannelDragLis
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mRecyclerView = new RecyclerView(inflater.getContext());
+        mRecyclerView.setBackgroundColor(Color.WHITE);
         return mRecyclerView;
     }
 
