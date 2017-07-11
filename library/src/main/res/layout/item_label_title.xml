@@ -9,6 +9,7 @@
         android:layout_height="wrap_content"
         android:paddingBottom="10.0dp"
         android:paddingTop="10.0dp"
+        android:layout_marginLeft="16.0dp"
         android:text="点击添加更多标签"
         android:textColor="#ff616161"
         android:textSize="14sp" />
@@ -21,6 +22,7 @@
         android:gravity="right"
         android:paddingBottom="10.0dp"
         android:paddingTop="10.0dp"
+        android:layout_marginRight="16.0dp"
         android:text="编辑"
         android:textColor="#ff616161"
         android:textSize="14sp" />

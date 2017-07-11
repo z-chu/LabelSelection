@@ -2,29 +2,64 @@ package com.pifubao.labelselection;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.view.KeyEvent;
 
 import com.zchu.labelselection.Label;
 import com.zchu.labelselection.LabelSelectionFragment;
+import com.zchu.labelselection.OnEditFinishListener;
+import com.zchu.log.Logger;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements OnEditFinishListener {
+
+    private LabelSelectionFragment labelSelectionFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        ArrayList<Label> selectedLabels=new ArrayList<>();
-        for (int i = 0; i < 15; i++) {
-            selectedLabels.add(new Label(i,"选中"+i));
-        }
-        ArrayList<Label> unselectedLabels=new ArrayList<>();
-        for (int i = 0; i < 15; i++) {
-            unselectedLabels.add(new Label(i,"未选中"+i));
-        }
+        ArrayList<Label> selectedLabels = new ArrayList<>();
+        selectedLabels.add(new Label(1, "Android"));
+        selectedLabels.add(new Label(2, "IOS"));
+        selectedLabels.add(new Label(3, "Java"));
+        selectedLabels.add(new Label(4, "GO"));
+        selectedLabels.add(new Label(5, "前端"));
+        selectedLabels.add(new Label(6, "React"));
+        selectedLabels.add(new Label(7, "Java"));
+        selectedLabels.add(new Label(8, "PHP"));
+
+        ArrayList<Label> unselectedLabels = new ArrayList<>();
+        unselectedLabels.add(new Label(9, "RxJava"));
+        unselectedLabels.add(new Label(10, "Dagger2"));
+        unselectedLabels.add(new Label(11, "MVP"));
+        unselectedLabels.add(new Label(12, "程序员"));
+        unselectedLabels.add(new Label(13, "GitHub"));
+        unselectedLabels.add(new Label(14, "python"));
+        unselectedLabels.add(new Label(15, "Google"));
+        unselectedLabels.add(new Label(16, ".Net"));
+
+        labelSelectionFragment=LabelSelectionFragment.newInstance(selectedLabels, unselectedLabels);
         getSupportFragmentManager()
                 .beginTransaction()
-                .replace(R.id.content_view, LabelSelectionFragment.newInstance(selectedLabels,unselectedLabels))
+                .replace(R.id.content_view, labelSelectionFragment)
                 .commit();
+    }
+
+    @Override
+    public void onEditFinish(ArrayList<Label> selectedLabels, ArrayList<Label> unselectedLabel) {
+        Logger.t("selectedLabels").e(selectedLabels);
+        Logger.t("unselectedLabel").e(unselectedLabel);
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (labelSelectionFragment.cancelEdit()) {
+                return true;//不执行父类点击事件
+            }
+
+        }
+        return super.onKeyDown(keyCode, event);//继续执行父类其他点击事件
     }
 }

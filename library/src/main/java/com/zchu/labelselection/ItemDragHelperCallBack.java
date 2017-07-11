@@ -6,19 +6,19 @@ import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.support.v7.widget.helper.ItemTouchHelper;
 
 /**
- * Created by Administrator on 2017/1/5 0005.
+ * Created by zchu on 2017/1/5 0005.
  */
 
 public class ItemDragHelperCallBack extends ItemTouchHelper.Callback {
-    private OnChannelDragListener onChannelDragListener;
+    private OnItemDragListener onChannelDragListener;
 
-    public ItemDragHelperCallBack(OnChannelDragListener onChannelDragListener) {
+    public ItemDragHelperCallBack(OnItemDragListener onChannelDragListener) {
         this.onChannelDragListener = onChannelDragListener;
     }
 
 
 
-    public void setOnChannelDragListener(OnChannelDragListener onChannelDragListener) {
+    public void setOnChannelDragListener(OnItemDragListener onChannelDragListener) {
         this.onChannelDragListener = onChannelDragListener;
     }
 

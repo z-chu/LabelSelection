@@ -14,6 +14,7 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,33 +23,40 @@ import java.util.List;
  * desc   :
  */
 
-public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     // touch 间隔时间  用于分辨是否是 "点击"
     private static final long TOUCH_SPACE_TIME = 100;
     // 动画持续时间
     private static final long ANIM_TIME = 400;
+    // touch 点击开始时间
+    private long touchStartTime;
 
     private Context mContext;
     private List<LabelSelectionItem> mData;
     private LayoutInflater mLayoutInflater;
-
     private RecyclerView mRecyclerView;
-    // touch 点击开始时间
-    private long touchStartTime;
-
-    private boolean isEditing;
     private LabelTitleViewHolder selectedTitleViewHolder;
+    private OnItemDragListener onChannelDragListener;
+    private OnEditFinishListener onEditFinishListener;
+    private boolean isEditing;
 
     public LabelSelectionAdapter(List<LabelSelectionItem> data) {
-        this.mData = data;
+        if (data == null) {
+            this.mData = new ArrayList<>();
+        } else {
+            this.mData = data;
+        }
+
 
     }
 
-    private OnChannelDragListener onChannelDragListener;
-
-    public void setOnChannelDragListener(OnChannelDragListener onChannelDragListener) {
+    public void setOnChannelDragListener(OnItemDragListener onChannelDragListener) {
         this.onChannelDragListener = onChannelDragListener;
+    }
+
+    public void setOnEditFinishListener(OnEditFinishListener onEditFinishListener) {
+        this.onEditFinishListener = onEditFinishListener;
     }
 
     @Override
@@ -288,6 +296,7 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
             onMove(currentPosition, selectedLastPosition + 1);
 
         }
+        finishEdit();
     }
 
     private void onMove(int starPos, int endPos) {
@@ -308,7 +317,7 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     @Override
     public int getItemCount() {
-        return mData == null ? 0 : mData.size();
+        return mData.size();
     }
 
     /**
@@ -381,8 +390,6 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
 
     /**
      * 获取推荐频道列表的第一个position
-     *
-     * @return
      */
     private int getUnselectedFirstPosition() {
         for (int i = 0; i < mData.size(); i++) {
@@ -414,6 +421,13 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         if (isEditing == state) {
             return;
         }
+        if (state) {
+            selectedTitleViewHolder.tvAction.setText("完成");
+        } else {
+            selectedTitleViewHolder.tvAction.setText("编辑");
+            finishEdit();
+
+        }
         isEditing = state;
         int visibleChildCount = mRecyclerView.getChildCount();
         for (int i = 0; i < visibleChildCount; i++) {
@@ -426,6 +440,29 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         }
     }
 
+    private void finishEdit() {
+        if (onEditFinishListener != null) {
+            ArrayList<Label> selectedLabels = new ArrayList<>();
+            ArrayList<Label> unselectedLabels = new ArrayList<>();
+            for (LabelSelectionItem labelSelectionItem : mData) {
+                if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_SELECTED) {
+                    selectedLabels.add(labelSelectionItem.getLabel());
+                } else if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_UNSELECTED) {
+                    unselectedLabels.add(labelSelectionItem.getLabel());
+                }
+            }
+            onEditFinishListener.onEditFinish(selectedLabels, unselectedLabels);
+        }
+    }
+
+    public boolean cancelEdit() {
+        if (isEditing) {
+            changeEditState(false);
+            return true;
+        }
+        return false;
+    }
+
     public void setNewData(List<LabelSelectionItem> mData) {
         this.mData = mData;
         this.notifyDataSetChanged();
@@ -435,37 +472,38 @@ public class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.Vie
         return mData;
     }
 
-    public static class LabelSelectedViewHolder extends RecyclerView.ViewHolder {
+    private static class LabelSelectedViewHolder extends RecyclerView.ViewHolder {
 
         private TextView tvName;
         private ImageView ivRemove;
 
-        public LabelSelectedViewHolder(View itemView) {
+        private LabelSelectedViewHolder(View itemView) {
             super(itemView);
             tvName = (TextView) itemView.findViewById(R.id.tv_name);
             ivRemove = (ImageView) itemView.findViewById(R.id.iv_remove);
         }
     }
 
-    public static class LabelUnselectedViewHolder extends RecyclerView.ViewHolder {
+    private static class LabelUnselectedViewHolder extends RecyclerView.ViewHolder {
 
         private TextView tvName;
 
-        public LabelUnselectedViewHolder(View itemView) {
+        private LabelUnselectedViewHolder(View itemView) {
             super(itemView);
             tvName = (TextView) itemView.findViewById(R.id.tv_name);
         }
     }
 
-    public static class LabelTitleViewHolder extends RecyclerView.ViewHolder {
+    private static class LabelTitleViewHolder extends RecyclerView.ViewHolder {
 
         private TextView tvTitle;
         private TextView tvAction;
 
-        public LabelTitleViewHolder(View itemView) {
+        private LabelTitleViewHolder(View itemView) {
             super(itemView);
             tvTitle = (TextView) itemView.findViewById(R.id.tv_title);
             tvAction = (TextView) itemView.findViewById(R.id.tv_action);
         }
     }
+
 }

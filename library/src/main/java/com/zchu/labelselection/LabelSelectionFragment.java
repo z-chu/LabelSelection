@@ -1,5 +1,6 @@
 package com.zchu.labelselection;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -19,7 +20,7 @@ import java.util.List;
  * desc   :
  */
 
-public class LabelSelectionFragment extends Fragment implements OnChannelDragListener {
+public class LabelSelectionFragment extends Fragment implements OnItemDragListener {
     private static final String BUNDLE_SELECTED_LABELS = "selected_labels";
     private static final String BUNDLE_UNSELECTED_LABELS = "unselected_labels";
 
@@ -27,6 +28,7 @@ public class LabelSelectionFragment extends Fragment implements OnChannelDragLis
     private RecyclerView mRecyclerView;
     private LabelSelectionAdapter mLabelSelectionAdapter;
     private ItemTouchHelper mHelper;
+    private OnEditFinishListener mOnEditFinishListener;
 
     public static LabelSelectionFragment newInstance(ArrayList<Label> selectedLabels, ArrayList<Label> unselectedLabels) {
 
@@ -46,24 +48,34 @@ public class LabelSelectionFragment extends Fragment implements OnChannelDragLis
     }
 
     @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+        if (context instanceof OnEditFinishListener) {
+            mOnEditFinishListener = (OnEditFinishListener) context;
+        }
+    }
+
+    @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
         Bundle arguments = getArguments();
-        if(arguments!=null){
+        if (arguments != null) {
             final ArrayList<LabelSelectionItem> labelSelectionItems = new ArrayList<>();
+            labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_SELECTED_TITLE, "已选择"));
             ArrayList<Label> selectedLabels = arguments.getParcelableArrayList(BUNDLE_SELECTED_LABELS);
-            if(selectedLabels!=null&&selectedLabels.size()>0){
-                labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_SELECTED_TITLE, "已选择"));
+            if (selectedLabels != null && selectedLabels.size() > 0) {
+
                 for (Label selectedLabel : selectedLabels) {
-                    labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_SELECTED,selectedLabel));
+                    labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_SELECTED, selectedLabel));
                 }
             }
+            labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_UNSELECTED_TITLE, "未选择"));
             ArrayList<Label> unselectedLabels = arguments.getParcelableArrayList(BUNDLE_UNSELECTED_LABELS);
-            if(unselectedLabels!=null&&unselectedLabels.size()>0){
-                labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_UNSELECTED_TITLE, "未选择"));
+            if (unselectedLabels != null && unselectedLabels.size() > 0) {
+
                 for (Label unselectedLabel : unselectedLabels) {
-                    labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_UNSELECTED,unselectedLabel));
+                    labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_UNSELECTED, unselectedLabel));
                 }
             }
             mLabelSelectionAdapter = new LabelSelectionAdapter(labelSelectionItems);
@@ -80,12 +92,11 @@ public class LabelSelectionFragment extends Fragment implements OnChannelDragLis
 
             ItemDragHelperCallBack callBack = new ItemDragHelperCallBack(this);
             mLabelSelectionAdapter.setOnChannelDragListener(this);
+            mLabelSelectionAdapter.setOnEditFinishListener(mOnEditFinishListener);
             mHelper = new ItemTouchHelper(callBack);
             mHelper.attachToRecyclerView(mRecyclerView);
 
         }
-
-
 
 
     }
@@ -105,4 +116,10 @@ public class LabelSelectionFragment extends Fragment implements OnChannelDragLis
     public void onStarDrag(RecyclerView.ViewHolder viewHolder) {
         mHelper.startDrag(viewHolder);
     }
+
+    public boolean cancelEdit() {
+        return mLabelSelectionAdapter.cancelEdit();
+    }
+
+
 }

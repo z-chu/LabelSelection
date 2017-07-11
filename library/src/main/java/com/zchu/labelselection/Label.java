@@ -57,7 +57,7 @@ public class Label implements Serializable, Parcelable {
         this.name = in.readString();
     }
 
-    public static final Parcelable.Creator<Label> CREATOR = new Parcelable.Creator<Label>() {
+    public static final Creator<Label> CREATOR = new Creator<Label>() {
         @Override
         public Label createFromParcel(Parcel source) {
             return new Label(source);
