@@ -61,6 +61,8 @@ public class LabelSelectionFragment extends Fragment implements OnItemDragListen
         mRecyclerView.setPadding((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 20, getResources().getDisplayMetrics()), 0, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
                 20, getResources().getDisplayMetrics()), 0);
+        mRecyclerView.setClipToPadding(false);
+        mRecyclerView.setClipChildren(false);
         return mRecyclerView;
     }
 
