@@ -58,9 +58,12 @@ public class LabelSelectionFragment extends Fragment implements OnItemDragListen
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mRecyclerView = new RecyclerView(inflater.getContext());
-        mRecyclerView.setPadding((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                20, getResources().getDisplayMetrics()), 0, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-                20, getResources().getDisplayMetrics()), 0);
+        mRecyclerView.setPadding(
+                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics()),
+                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 8, getResources().getDisplayMetrics()),
+                (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 20, getResources().getDisplayMetrics()),
+                0
+        );
         mRecyclerView.setClipToPadding(false);
         mRecyclerView.setClipChildren(false);
         return mRecyclerView;
@@ -108,7 +111,7 @@ public class LabelSelectionFragment extends Fragment implements OnItemDragListen
                 @Override
                 public int getSpanSize(int position) {
                     int itemViewType = mLabelSelectionAdapter.getItemViewType(position);
-                    return itemViewType == LabelSelectionItem.TYPE_LABEL_SELECTED || itemViewType == LabelSelectionItem.TYPE_LABEL_UNSELECTED||itemViewType == LabelSelectionItem.TYPE_LABEL_ALWAY_SELECTED ? 1 : 4;
+                    return itemViewType == LabelSelectionItem.TYPE_LABEL_SELECTED || itemViewType == LabelSelectionItem.TYPE_LABEL_UNSELECTED || itemViewType == LabelSelectionItem.TYPE_LABEL_ALWAY_SELECTED ? 1 : 4;
                 }
             });
             mRecyclerView.setLayoutManager(gridLayoutManager);

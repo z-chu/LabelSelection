@@ -7,6 +7,7 @@
     <FrameLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+
         android:layout_gravity="center">
 
         <TextView
@@ -15,6 +16,7 @@
             android:layout_height="30dp"
             android:layout_marginBottom="10dp"
             android:layout_marginTop="10dp"
+            android:elevation="@dimen/elevation_label"
             android:background="@drawable/bg_label_normal"
             android:gravity="center"
             android:text="精华"
@@ -25,7 +27,9 @@
             android:id="@+id/iv_remove"
             android:layout_width="12dp"
             android:layout_height="12dp"
+            android:elevation="@dimen/elevation_label"
             android:layout_marginTop="4dp"
+            android:layout_gravity="end"
             android:visibility="visible"
             app:srcCompat="@drawable/ic_label_remove" />
 

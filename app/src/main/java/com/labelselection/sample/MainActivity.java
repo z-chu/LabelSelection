@@ -20,9 +20,11 @@ public class MainActivity extends AppCompatActivity implements OnEditFinishListe
         super.onCreate(savedInstanceState);
         Logger.init("LabelSelection");
         setContentView(R.layout.activity_main);
+
         ArrayList<Label> alwaySelectedLabels = new ArrayList<>();
         alwaySelectedLabels.add(new Label(1, "Android"));
         alwaySelectedLabels.add(new Label(3, "Java"));
+
         ArrayList<Label> selectedLabels = new ArrayList<>();
         selectedLabels.add(new Label(2, "IOS"));
         selectedLabels.add(new Label(4, "GO"));
@@ -39,6 +41,20 @@ public class MainActivity extends AppCompatActivity implements OnEditFinishListe
         unselectedLabels.add(new Label(14, "python"));
         unselectedLabels.add(new Label(15, "Google"));
         unselectedLabels.add(new Label(16, ".Net"));
+        unselectedLabels.add(new Label(17, "IT"));
+        unselectedLabels.add(new Label(18, "面试"));
+        unselectedLabels.add(new Label(19, "小说"));
+        unselectedLabels.add(new Label(20, "游戏"));
+        unselectedLabels.add(new Label(21, "动漫"));
+        unselectedLabels.add(new Label(22, "博客"));
+        unselectedLabels.add(new Label(23, "搞事情"));
+        unselectedLabels.add(new Label(24, "互相伤害"));
+        unselectedLabels.add(new Label(25, "二次元"));
+        unselectedLabels.add(new Label(26, "美白"));
+        unselectedLabels.add(new Label(27, "护肤"));
+        unselectedLabels.add(new Label(28, "JS"));
+        unselectedLabels.add(new Label(29, "妹子"));
+        unselectedLabels.add(new Label(30, "干货"));
 
         labelSelectionFragment = LabelSelectionFragment.newInstance(selectedLabels, unselectedLabels,alwaySelectedLabels);
         getSupportFragmentManager()
