@@ -7,6 +7,7 @@ import android.support.v4.app.Fragment;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,6 +23,7 @@ import java.util.List;
 
 public class LabelSelectionFragment extends Fragment implements OnItemDragListener {
     private static final String BUNDLE_SELECTED_LABELS = "selected_labels";
+    private static final String BUNDLE_ALWAY_SELECTED_LABELS = "alway_selected_labels";
     private static final String BUNDLE_UNSELECTED_LABELS = "unselected_labels";
 
 
@@ -40,10 +42,25 @@ public class LabelSelectionFragment extends Fragment implements OnItemDragListen
         return fragment;
     }
 
+    public static LabelSelectionFragment newInstance(ArrayList<Label> selectedLabels, ArrayList<Label> unselectedLabels, ArrayList<Label> alwaySelectedLabels) {
+
+        Bundle args = new Bundle();
+        args.putParcelableArrayList(BUNDLE_SELECTED_LABELS, selectedLabels);
+        args.putParcelableArrayList(BUNDLE_ALWAY_SELECTED_LABELS, alwaySelectedLabels);
+        args.putParcelableArrayList(BUNDLE_UNSELECTED_LABELS, unselectedLabels);
+        LabelSelectionFragment fragment = new LabelSelectionFragment();
+        fragment.setArguments(args);
+        return fragment;
+    }
+
+
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         mRecyclerView = new RecyclerView(inflater.getContext());
+        mRecyclerView.setPadding((int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                20, getResources().getDisplayMetrics()), 0, (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+                20, getResources().getDisplayMetrics()), 0);
         return mRecyclerView;
     }
 
@@ -62,15 +79,20 @@ public class LabelSelectionFragment extends Fragment implements OnItemDragListen
         Bundle arguments = getArguments();
         if (arguments != null) {
             final ArrayList<LabelSelectionItem> labelSelectionItems = new ArrayList<>();
-            labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_SELECTED_TITLE, "已选择"));
+            labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_SELECTED_TITLE, "切换栏目"));
+            ArrayList<Label> alwaySelectedLabels = arguments.getParcelableArrayList(BUNDLE_ALWAY_SELECTED_LABELS);
+            if (alwaySelectedLabels != null && alwaySelectedLabels.size() > 0) {
+                for (Label alwaySelectedLabel : alwaySelectedLabels) {
+                    labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_ALWAY_SELECTED, alwaySelectedLabel));
+                }
+            }
             ArrayList<Label> selectedLabels = arguments.getParcelableArrayList(BUNDLE_SELECTED_LABELS);
             if (selectedLabels != null && selectedLabels.size() > 0) {
-
                 for (Label selectedLabel : selectedLabels) {
                     labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_SELECTED, selectedLabel));
                 }
             }
-            labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_UNSELECTED_TITLE, "未选择"));
+            labelSelectionItems.add(new LabelSelectionItem(LabelSelectionItem.TYPE_LABEL_UNSELECTED_TITLE, "点击添加更多标签"));
             ArrayList<Label> unselectedLabels = arguments.getParcelableArrayList(BUNDLE_UNSELECTED_LABELS);
             if (unselectedLabels != null && unselectedLabels.size() > 0) {
 
@@ -79,12 +101,12 @@ public class LabelSelectionFragment extends Fragment implements OnItemDragListen
                 }
             }
             mLabelSelectionAdapter = new LabelSelectionAdapter(labelSelectionItems);
-            GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), 3);
+            GridLayoutManager gridLayoutManager = new GridLayoutManager(getContext(), 4);
             gridLayoutManager.setSpanSizeLookup(new GridLayoutManager.SpanSizeLookup() {
                 @Override
                 public int getSpanSize(int position) {
                     int itemViewType = mLabelSelectionAdapter.getItemViewType(position);
-                    return itemViewType == LabelSelectionItem.TYPE_LABEL_SELECTED || itemViewType == LabelSelectionItem.TYPE_LABEL_UNSELECTED ? 1 : 3;
+                    return itemViewType == LabelSelectionItem.TYPE_LABEL_SELECTED || itemViewType == LabelSelectionItem.TYPE_LABEL_UNSELECTED||itemViewType == LabelSelectionItem.TYPE_LABEL_ALWAY_SELECTED ? 1 : 4;
                 }
             });
             mRecyclerView.setLayoutManager(gridLayoutManager);

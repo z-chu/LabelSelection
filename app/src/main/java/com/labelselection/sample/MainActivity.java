@@ -1,4 +1,4 @@
-package com.pifubao.labelselection;
+package com.labelselection.sample;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -18,15 +18,16 @@ public class MainActivity extends AppCompatActivity implements OnEditFinishListe
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Logger.init("LabelSelection");
         setContentView(R.layout.activity_main);
+        ArrayList<Label> alwaySelectedLabels = new ArrayList<>();
+        alwaySelectedLabels.add(new Label(1, "Android"));
+        alwaySelectedLabels.add(new Label(3, "Java"));
         ArrayList<Label> selectedLabels = new ArrayList<>();
-        selectedLabels.add(new Label(1, "Android"));
         selectedLabels.add(new Label(2, "IOS"));
-        selectedLabels.add(new Label(3, "Java"));
         selectedLabels.add(new Label(4, "GO"));
         selectedLabels.add(new Label(5, "前端"));
         selectedLabels.add(new Label(6, "React"));
-        selectedLabels.add(new Label(7, "Java"));
         selectedLabels.add(new Label(8, "PHP"));
 
         ArrayList<Label> unselectedLabels = new ArrayList<>();
@@ -39,18 +40,13 @@ public class MainActivity extends AppCompatActivity implements OnEditFinishListe
         unselectedLabels.add(new Label(15, "Google"));
         unselectedLabels.add(new Label(16, ".Net"));
 
-        labelSelectionFragment=LabelSelectionFragment.newInstance(selectedLabels, unselectedLabels);
+        labelSelectionFragment = LabelSelectionFragment.newInstance(selectedLabels, unselectedLabels,alwaySelectedLabels);
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(R.id.content_view, labelSelectionFragment)
                 .commit();
     }
 
-    @Override
-    public void onEditFinish(ArrayList<Label> selectedLabels, ArrayList<Label> unselectedLabel) {
-        Logger.t("selectedLabels").e(selectedLabels);
-        Logger.t("unselectedLabel").e(unselectedLabel);
-    }
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
@@ -61,5 +57,12 @@ public class MainActivity extends AppCompatActivity implements OnEditFinishListe
 
         }
         return super.onKeyDown(keyCode, event);//继续执行父类其他点击事件
+    }
+
+    @Override
+    public void onEditFinish(ArrayList<Label> selectedLabels, ArrayList<Label> unselectedLabel, ArrayList<Label> alwaySelectedLabels) {
+        Logger.e(selectedLabels);
+        Logger.e(unselectedLabel);
+        Logger.e(alwaySelectedLabels);
     }
 }

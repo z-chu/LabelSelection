@@ -7,5 +7,5 @@ import java.util.ArrayList;
  */
 
 public interface OnEditFinishListener {
-    void onEditFinish(ArrayList<Label> selectedLabels, ArrayList<Label> unselectedLabel);
+    void onEditFinish(ArrayList<Label> selectedLabels, ArrayList<Label> unselectedLabel, ArrayList<Label> alwaySelectedLabels);
 }

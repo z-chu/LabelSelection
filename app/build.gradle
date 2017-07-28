@@ -4,7 +4,7 @@ android {
     compileSdkVersion 25
     buildToolsVersion "25.0.3"
     defaultConfig {
-        applicationId "com.pifubao.labelselection"
+        applicationId "com.labelselection.sample"
         minSdkVersion 16
         targetSdkVersion 25
         versionCode 1

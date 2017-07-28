@@ -1,4 +1,4 @@
-package com.pifubao.labelselection;
+package com.labelselection.sample;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;

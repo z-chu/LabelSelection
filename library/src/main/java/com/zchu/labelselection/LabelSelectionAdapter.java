@@ -2,12 +2,14 @@ package com.zchu.labelselection;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewParent;
 import android.view.animation.Animation;
 import android.view.animation.TranslateAnimation;
 import android.widget.FrameLayout;
@@ -72,10 +74,19 @@ class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         }
         switch (viewType) {
             case LabelSelectionItem.TYPE_LABEL_SELECTED:
-                viewHolder = createLabelSelectedViewHolder(parent);
+                viewHolder = new LabelSelectedViewHolder(mLayoutInflater.inflate(R.layout.item_label_selected, parent, false));
+                break;
+            case LabelSelectionItem.TYPE_LABEL_ALWAY_SELECTED:
+                LabelSelectedViewHolder alwaySelectedViewHolder = new LabelSelectedViewHolder(mLayoutInflater.inflate(R.layout.item_label_selected, parent, false));
+                alwaySelectedViewHolder.tvName.setTextColor(ContextCompat.getColor(mContext, R.color.label_alway_selected));
+                ViewParent parent1 = alwaySelectedViewHolder.ivRemove.getParent();
+                if (parent1 != null) {
+                    ((ViewGroup) parent1).removeView(alwaySelectedViewHolder.ivRemove);
+                }
+                viewHolder = alwaySelectedViewHolder;
                 break;
             case LabelSelectionItem.TYPE_LABEL_UNSELECTED:
-                viewHolder = createLabelUnselectedViewHolder(parent);
+                viewHolder = new LabelUnselectedViewHolder(mLayoutInflater.inflate(R.layout.item_label_unselected, parent, false));
                 break;
             case LabelSelectionItem.TYPE_LABEL_SELECTED_TITLE:
                 selectedTitleViewHolder = new LabelTitleViewHolder(mLayoutInflater.inflate(R.layout.item_label_title, parent, false));
@@ -84,8 +95,10 @@ class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     public void onClick(View v) {
                         if (isEditing) {
                             changeEditState(false);
+                            selectedTitleViewHolder.tvTitle.setText("切换栏目");
                             selectedTitleViewHolder.tvAction.setText("编辑");
                         } else {
+                            selectedTitleViewHolder.tvTitle.setText("拖动排序");
                             selectedTitleViewHolder.tvAction.setText("完成");
                             changeEditState(true);
                         }
@@ -102,25 +115,6 @@ class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         return viewHolder;
     }
 
-    private RecyclerView.ViewHolder createLabelSelectedViewHolder(ViewGroup parent) {
-        final LabelSelectedViewHolder labelSelectedViewHolder = new LabelSelectedViewHolder(mLayoutInflater.inflate(R.layout.item_label_selected, parent, false));
-
-
-        return labelSelectedViewHolder;
-    }
-
-    private RecyclerView.ViewHolder createLabelUnselectedViewHolder(ViewGroup parent) {
-        final LabelUnselectedViewHolder labelUnselectedViewHolder = new LabelUnselectedViewHolder(mLayoutInflater.inflate(R.layout.item_label_unselected, parent, false));
-       /* labelUnselectedViewHolder.tvName.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                selectedLabel(labelUnselectedViewHolder, mData.get(labelUnselectedViewHolder.getAdapterPosition()));
-            }
-        });*/
-        return labelUnselectedViewHolder;
-    }
-
-
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
         LabelSelectionItem labelSelectionItem = mData.get(position);
@@ -128,9 +122,11 @@ class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case LabelSelectionItem.TYPE_LABEL_SELECTED:
                 bindLabelSelectedViewHolder((LabelSelectedViewHolder) holder, labelSelectionItem);
                 break;
+            case LabelSelectionItem.TYPE_LABEL_ALWAY_SELECTED:
+                bindLabelAlwaySelectedViewHolder((LabelSelectedViewHolder) holder, labelSelectionItem);
+                break;
             case LabelSelectionItem.TYPE_LABEL_UNSELECTED:
                 bindLabelUnselectedViewHolder((LabelUnselectedViewHolder) holder, labelSelectionItem);
-
                 break;
             case LabelSelectionItem.TYPE_LABEL_SELECTED_TITLE:
                 ((LabelTitleViewHolder) holder).tvTitle.setText(labelSelectionItem.getTitle());
@@ -138,7 +134,25 @@ class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             case LabelSelectionItem.TYPE_LABEL_UNSELECTED_TITLE:
                 ((LabelTitleViewHolder) holder).tvTitle.setText(labelSelectionItem.getTitle());
                 break;
+
         }
+    }
+
+    private void bindLabelAlwaySelectedViewHolder(LabelSelectedViewHolder holder, LabelSelectionItem item) {
+        holder.tvName.setText(item.getLabel().getName());
+        holder.tvName.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (!isEditing) {
+                    //开启编辑模式
+                    changeEditState(true);
+                    //  mEditViewHolder.setText(R.id.tvEdit, "完成");
+                    selectedTitleViewHolder.tvTitle.setText("拖动排序");
+                    selectedTitleViewHolder.tvAction.setText("完成");
+                }
+                return true;
+            }
+        });
     }
 
     private void bindLabelSelectedViewHolder(final LabelSelectedViewHolder holder, final LabelSelectionItem item) {
@@ -190,6 +204,7 @@ class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
                     //开启编辑模式
                     changeEditState(true);
                     //  mEditViewHolder.setText(R.id.tvEdit, "完成");
+                    selectedTitleViewHolder.tvTitle.setText("拖动排序");
                     selectedTitleViewHolder.tvAction.setText("完成");
                 }
                 if (onChannelDragListener != null) {
@@ -380,7 +395,7 @@ class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         int size = 0;
         for (int i = 0; i < mData.size(); i++) {
             LabelSelectionItem labelSelectionItem = mData.get(i);
-            if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_SELECTED) {
+            if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_SELECTED||labelSelectionItem.getItemType()== LabelSelectionItem.TYPE_LABEL_ALWAY_SELECTED) {
                 size++;
             }
         }
@@ -407,7 +422,7 @@ class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
     private int getSelectedLastPosition() {
         for (int i = mData.size() - 1; i >= 0; i--) {
             LabelSelectionItem labelSelectionItem = mData.get(i);
-            if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_SELECTED) {
+            if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_SELECTED || labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_ALWAY_SELECTED) {
                 return i;
             }
         }
@@ -422,8 +437,10 @@ class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             return;
         }
         if (state) {
+            selectedTitleViewHolder.tvTitle.setText("拖动排序");
             selectedTitleViewHolder.tvAction.setText("完成");
         } else {
+            selectedTitleViewHolder.tvTitle.setText("切换栏目");
             selectedTitleViewHolder.tvAction.setText("编辑");
             finishEdit();
 
@@ -444,14 +461,17 @@ class LabelSelectionAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         if (onEditFinishListener != null) {
             ArrayList<Label> selectedLabels = new ArrayList<>();
             ArrayList<Label> unselectedLabels = new ArrayList<>();
+            ArrayList<Label> alwaySelectedLabels = new ArrayList<>();
             for (LabelSelectionItem labelSelectionItem : mData) {
-                if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_SELECTED) {
+                if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_SELECTED ) {
                     selectedLabels.add(labelSelectionItem.getLabel());
                 } else if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_UNSELECTED) {
                     unselectedLabels.add(labelSelectionItem.getLabel());
+                } else if (labelSelectionItem.getItemType() == LabelSelectionItem.TYPE_LABEL_ALWAY_SELECTED) {
+                    alwaySelectedLabels.add(labelSelectionItem.getLabel());
                 }
             }
-            onEditFinishListener.onEditFinish(selectedLabels, unselectedLabels);
+            onEditFinishListener.onEditFinish(selectedLabels, unselectedLabels, alwaySelectedLabels);
         }
     }
 

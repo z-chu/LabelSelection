@@ -11,6 +11,7 @@ import java.io.Serializable;
 public class LabelSelectionItem implements Serializable {
     static final int TYPE_LABEL_UNSELECTED = 1;
     static final int TYPE_LABEL_SELECTED = 2;
+    static final int TYPE_LABEL_ALWAY_SELECTED = 5;
     static final int TYPE_LABEL_SELECTED_TITLE = 3;
     static final int TYPE_LABEL_UNSELECTED_TITLE = 4;
 
