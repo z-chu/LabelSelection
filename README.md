@@ -8,8 +8,8 @@
 
 **1. 创建**
 ```java
-		//创建置顶且默认选择标签
-  		ArrayList<Label> alwaySelectedLabels = new ArrayList<>();
+	//创建置顶且默认选择标签
+  	ArrayList<Label> alwaySelectedLabels = new ArrayList<>();
         alwaySelectedLabels.add(new Label(1, "Android"));
         alwaySelectedLabels.add(new Label(3, "Java"));
 		//创建默认选择标签
